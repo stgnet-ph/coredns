@@ -71,7 +71,6 @@ func templateParse(c *caddy.Controller) (handler Handler, err error) {
 		t := template{qclass: class, qtype: qtype, zones: zones}
 
 		t.regex = make([]*regexp.Regexp, 0)
-		templatePrefix := ""
 
 		t.answer = make([]*gotmpl.Template, 0)
 
@@ -87,8 +86,20 @@ func templateParse(c *caddy.Controller) (handler Handler, err error) {
 					if err != nil {
 						return handler, c.Errf("could not parse regex: %s, %v", regex, err)
 					}
-					templatePrefix = templatePrefix + regex + " "
 					t.regex = append(t.regex, r)
+				}
+
+			case "nomatch":
+				args := c.RemainingArgs()
+				if len(args) == 0 {
+					return handler, c.ArgErr()
+				}
+				for _, regex := range args {
+					r, err := regexp.Compile(regex)
+					if err != nil {
+						return handler, c.Errf("could not parse regex: %s, %v", regex, err)
+					}
+					t.noregex = append(t.noregex, r)
 				}
 
 			case "answer":

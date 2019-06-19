@@ -341,6 +341,7 @@ func TestMultiSection(t *testing.T) {
 		# Answer example. ip templates and fallthrough otherwise
 		template IN A example {
 			match ^ip-10-(?P<b>[0-9]*)-(?P<c>[0-9]*)-(?P<d>[0-9]*)[.]example[.]$
+			nomatch ^ip-10-20-30-40[.]example[.]$
 			answer "{{ .Name }} 60 IN A 10.{{ .Group.b }}.{{ .Group.c }}.{{ .Group.d }}"
 			fallthrough
 		}
@@ -457,6 +458,17 @@ func TestMultiSection(t *testing.T) {
 	}
 	if code != dns.RcodeNameError {
 		t.Fatalf("TestMultiSection expected NXDOMAIN resolving something.example. IN MX, got %v, %v", code, dns.RcodeToString[code])
+	}
+
+	// check the nomatch case
+
+	req = &dns.Msg{Question: []dns.Question{{Name: "ip-10-20-30-40.example.", Qclass: dns.ClassINET, Qtype: dns.TypeA}}}
+	code, err = handler.ServeDNS(ctx, rec, req)
+	if err != nil {
+		t.Fatalf("TestMultiSection expected no error resolving ip-10-20-30-40.example. IN A, got: %v", err)
+	}
+	if code != rcodeFallthrough {
+		t.Fatalf("TestMultiSection expected fall through resolving ip-10-20-30-40.example. IN A")
 	}
 }
 

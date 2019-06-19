@@ -28,6 +28,7 @@ type template struct {
 	zones      []string
 	rcode      int
 	regex      []*regexp.Regexp
+	noregex    []*regexp.Regexp
 	answer     []*gotmpl.Template
 	additional []*gotmpl.Template
 	authority  []*gotmpl.Template
@@ -147,6 +148,18 @@ func (t template) match(state request.Request, zone string) (templateData, bool,
 
 	for _, regex := range t.regex {
 		if !regex.MatchString(state.Name()) {
+			// skip to the next one that might match
+			continue
+		}
+
+		// check all of the nomatch
+		nomatch := false
+		for _, noregex := range t.noregex {
+			if noregex.MatchString(state.Name()) {
+				nomatch = true
+			}
+		}
+		if nomatch {
 			continue
 		}
 
